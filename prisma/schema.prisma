@@ -1,0 +1,344 @@
+// Ethereal Steps - E-commerce Database Schema
+// Tienda de Calzado para Dama
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============= USUARIOS Y AUTENTICACIÓN =============
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  image         String?
+  role          UserRole  @default(CUSTOMER)
+
+  // Relaciones
+  addresses     Address[]
+  orders        Order[]
+  cart          Cart?
+  reviews       Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model Address {
+  id           String  @id @default(cuid())
+  userId       String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName     String
+  phone        String
+  street       String
+  city         String
+  state        String
+  zipCode      String
+  country      String  @default("Perú")
+  isDefault    Boolean @default(false)
+
+  // Relaciones
+  orders       Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+// ============= PRODUCTOS =============
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  slug        String   @unique
+
+  // Precios
+  price       Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2) // Precio antes de descuento
+
+  // Categorización
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  // Imágenes
+  images      ProductImage[]
+
+  // Inventario y variantes
+  variants    ProductVariant[]
+
+  // Reviews
+  reviews     Review[]
+
+  // Estado
+  featured    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+
+  products    Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String
+  alt       String?
+  order     Int     @default(0)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Talla (35, 36, 37, 38, 39, 40, 41, 42)
+  size      String
+
+  // Color
+  color     String
+  colorHex  String? // Código hexadecimal del color
+
+  // Stock
+  stock     Int     @default(0)
+  sku       String  @unique
+
+  // Items en carritos y ordenes
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size, color])
+  @@map("product_variants")
+}
+
+// ============= CARRITO DE COMPRAS =============
+
+model Cart {
+  id     String     @id @default(cuid())
+  userId String     @unique
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items  CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  quantity  Int            @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+// ============= ÓRDENES Y PAGOS =============
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  // Dirección de envío
+  addressId     String
+  shippingAddress Address   @relation(fields: [addressId], references: [id])
+
+  // Items
+  items         OrderItem[]
+
+  // Totales
+  subtotal      Decimal     @db.Decimal(10, 2)
+  tax           Decimal     @db.Decimal(10, 2)
+  shipping      Decimal     @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+
+  // Estado
+  status        OrderStatus @default(PENDING)
+
+  // Pago
+  payment       Payment?
+
+  // Comprobante
+  invoice       Invoice?
+
+  // Notas
+  notes         String?     @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING       // Pendiente de pago
+  PAID          // Pagado
+  PROCESSING    // En procesamiento
+  SHIPPED       // Enviado
+  DELIVERED     // Entregado
+  CANCELLED     // Cancelado
+  REFUNDED      // Reembolsado
+}
+
+model OrderItem {
+  id        String         @id @default(cuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  quantity  Int
+  price     Decimal        @db.Decimal(10, 2) // Precio al momento de la compra
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("PEN")
+
+  // Stripe/Pasarela
+  stripePaymentId String?       @unique
+  paymentMethod   PaymentMethod
+
+  status          PaymentStatus @default(PENDING)
+
+  paidAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CARD          // Tarjeta de crédito/débito
+  YAPE          // Yape
+  PLIN          // Plin
+  BANK_TRANSFER // Transferencia bancaria
+  CASH          // Efectivo (contra entrega)
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// ============= COMPROBANTES =============
+
+model Invoice {
+  id              String       @id @default(cuid())
+  orderId         String       @unique
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  invoiceNumber   String       @unique
+  invoiceType     InvoiceType  @default(BOLETA)
+
+  // Datos del cliente
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  customerDoc     String       // DNI/RUC
+  customerAddress String?
+
+  // Datos fiscales (para factura)
+  ruc             String?
+  businessName    String?
+
+  // PDF
+  pdfUrl          String?
+
+  issuedAt        DateTime     @default(now())
+
+  @@map("invoices")
+}
+
+enum InvoiceType {
+  BOLETA
+  FACTURA
+}
+
+// ============= REVIEWS =============
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating    Int      // 1-5 estrellas
+  comment   String?  @db.Text
+
+  verified  Boolean  @default(false) // Si compró el producto
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@map("reviews")
+}

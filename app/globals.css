@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 26 26 46; /* #1a1a2e */
+    --foreground: 255 255 255;
+
+    --card: 22 33 62; /* #16213e */
+    --card-foreground: 255 255 255;
+
+    --primary: 255 181 216; /* Rosa Pastel */
+    --primary-foreground: 26 26 46;
+
+    --secondary: 212 197 232; /* Lavanda */
+    --secondary-foreground: 26 26 46;
+
+    --accent: 197 232 219; /* Menta */
+    --accent-foreground: 26 26 46;
+
+    --muted: 15 52 96;
+    --muted-foreground: 197 197 220;
+
+    --border: 212 197 232;
+    --input: 212 197 232;
+    --ring: 255 181 216;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-pastel-lavender/20;
+  }
+
+  body {
+    @apply bg-dark-primary text-white;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Botones Elegantes */
+  .btn-primary {
+    @apply bg-pastel-rose hover:bg-pastel-rose/90 text-dark-primary font-semibold
+           px-6 py-3 rounded-lg transition-all duration-300
+           shadow-lg hover:shadow-pastel-rose/50 hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply bg-pastel-lavender hover:bg-pastel-lavender/90 text-dark-primary
+           font-semibold px-6 py-3 rounded-lg transition-all duration-300;
+  }
+
+  .btn-outline {
+    @apply border-2 border-pastel-rose text-pastel-rose hover:bg-pastel-rose
+           hover:text-dark-primary font-semibold px-6 py-3 rounded-lg
+           transition-all duration-300;
+  }
+
+  /* Cards Elegantes */
+  .card {
+    @apply bg-dark-secondary rounded-xl p-6 shadow-xl border border-pastel-lavender/10
+           hover:border-pastel-rose/30 transition-all duration-300;
+  }
+
+  .card-product {
+    @apply card hover:scale-105 hover:shadow-2xl hover:shadow-pastel-rose/20
+           cursor-pointer group;
+  }
+
+  /* Inputs Elegantes */
+  .input {
+    @apply bg-dark-secondary border border-pastel-lavender/30 text-white
+           placeholder:text-gray-400 px-4 py-3 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-pastel-rose
+           transition-all duration-300;
+  }
+
+  /* Gradientes de Fondo */
+  .bg-gradient-elegant {
+    @apply bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-accent;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-pastel-rose via-pastel-lavender to-pastel-mint
+           bg-clip-text text-transparent;
+  }
+
+  /* Efectos Glassmorphism */
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Scrollbar Personalizada */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-pastel-rose/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-pastel-rose;
+}
+
+/* Animaciones Personalizadas */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 181, 216, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+}
