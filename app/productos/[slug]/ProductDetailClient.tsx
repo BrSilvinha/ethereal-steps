@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -42,6 +42,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   // Get unique colors
   const availableColors = Array.from(
@@ -62,6 +64,63 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     (v) => v.size === selectedSize && v.color === selectedColor
   );
   const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+
+  // Check if product is in favorites
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!session) {
+        setIsFavorite(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/favorites/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: product.id }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFavorite(data.isFavorite);
+        }
+      } catch (error) {
+        console.error("Error checking favorite:", error);
+      }
+    };
+
+    checkFavorite();
+  }, [session, product.id]);
+
+  const handleToggleFavorite = async () => {
+    if (!session) {
+      toast.error("Debes iniciar sesion para agregar a favoritos");
+      router.push("/auth/login");
+      return;
+    }
+
+    setIsTogglingFavorite(true);
+    try {
+      const response = await fetch("/api/favorites/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar favoritos");
+      }
+
+      const data = await response.json();
+      setIsFavorite(data.isFavorite);
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Error al actualizar favoritos");
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!session) {
@@ -299,9 +358,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             )}
 
             <div className="flex gap-3">
-              <button className="flex-1 btn-outline flex items-center justify-center gap-2">
-                <Heart size={20} />
-                Favoritos
+              <button
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite}
+                className={`flex-1 btn-outline flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isFavorite ? "text-pastel-rose border-pastel-rose" : ""
+                }`}
+              >
+                <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
+                {isFavorite ? "En Favoritos" : "Agregar a Favoritos"}
               </button>
               <button className="flex-1 btn-outline flex items-center justify-center gap-2">
                 <Share2 size={20} />

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Sparkles, ShoppingBag, User, LogOut, Settings, Menu, X } from "lucide-react";
+import { Sparkles, ShoppingBag, User, LogOut, Settings, Menu, X, Heart } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 
@@ -90,6 +90,14 @@ export default function Navbar() {
                         )}
                       </div>
                       <div className="py-2">
+                        <Link
+                          href="/favoritos"
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-dark-accent transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Heart size={16} />
+                          <span className="text-sm">Mis Favoritos</span>
+                        </Link>
                         <Link
                           href="/orders"
                           className="flex items-center gap-3 px-4 py-2 hover:bg-dark-accent transition-colors"
