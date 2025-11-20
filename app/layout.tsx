@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import SessionProvider from "@/components/providers/SessionProvider";
+import { CartProvider } from "@/contexts/CartContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -33,26 +35,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${playfair.variable}`}>
+    <html lang="es" className={`${inter.variable} ${playfair.variable}`}>
       <body className="antialiased bg-gradient-elegant min-h-screen">
-        {children}
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: "#16213e",
-              color: "#fff",
-              border: "1px solid rgba(212, 197, 232, 0.3)",
-            },
-            success: {
-              iconTheme: {
-                primary: "#FFB5D8",
-                secondary: "#fff",
-              },
-            },
-          }}
-        />
+        <SessionProvider>
+          <CartProvider>
+            {children}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: "#16213e",
+                  color: "#fff",
+                  border: "1px solid rgba(212, 197, 232, 0.3)",
+                },
+                success: {
+                  iconTheme: {
+                    primary: "#FFB5D8",
+                    secondary: "#fff",
+                  },
+                },
+              }}
+            />
+          </CartProvider>
+        </SessionProvider>
       </body>
     </html>
   );

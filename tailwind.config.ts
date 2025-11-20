@@ -28,7 +28,7 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
+        sans: ['var(--font-inter)'],
         serif: ['Playfair Display', 'serif'],
       },
       backgroundImage: {

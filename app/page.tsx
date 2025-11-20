@@ -1,47 +1,37 @@
 import Link from "next/link";
-import { Sparkles, ShoppingBag, Shield, Truck } from "lucide-react";
+import { Sparkles, Shield, Truck } from "lucide-react";
+import Navbar from "@/components/layout/Navbar";
+import { prisma } from "@/lib/prisma";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featuredProducts = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      featured: true,
+    },
+    include: {
+      category: true,
+      images: {
+        orderBy: { order: "asc" },
+        take: 1,
+      },
+      variants: {
+        select: { stock: true },
+      },
+    },
+    take: 4,
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  const categories = await prisma.category.findMany({
+    take: 4,
+  });
+
   return (
     <div className="min-h-screen">
-      {/* Header/Navbar Simple */}
-      <header className="glass border-b border-pastel-lavender/10 sticky top-0 z-50">
-        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="text-pastel-rose" size={32} />
-            <h1 className="text-2xl font-serif font-bold text-gradient">
-              Ethereal Steps
-            </h1>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-white/80 hover:text-pastel-rose transition-colors">
-              Inicio
-            </Link>
-            <Link href="/productos" className="text-white/80 hover:text-pastel-rose transition-colors">
-              Productos
-            </Link>
-            <Link href="/categorias" className="text-white/80 hover:text-pastel-rose transition-colors">
-              Categorías
-            </Link>
-            <Link href="/contacto" className="text-white/80 hover:text-pastel-rose transition-colors">
-              Contacto
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link href="/auth/login" className="text-white/80 hover:text-pastel-rose transition-colors">
-              Ingresar
-            </Link>
-            <Link href="/carrito" className="relative">
-              <ShoppingBag className="text-pastel-rose" size={24} />
-              <span className="absolute -top-2 -right-2 bg-pastel-rose text-dark-primary text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                0
-              </span>
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20">
@@ -113,21 +103,82 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
+          <h2 className="text-4xl font-serif font-bold text-center mb-12">
+            <span className="text-gradient">Productos Destacados</span>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredProducts.map((product) => {
+              const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+              const imageUrl = product.images[0]?.url;
+
+              return (
+                <Link
+                  key={product.id}
+                  href={`/productos/${product.slug}`}
+                  className="card group hover:scale-105 transition-transform"
+                >
+                  <div className="aspect-square bg-dark-accent rounded-lg overflow-hidden mb-4">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-pastel-lavender mb-1">
+                      {product.category.name}
+                    </p>
+                    <h3 className="font-serif text-lg font-semibold mb-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-pastel-rose font-bold">
+                        S/ {Number(product.price).toFixed(2)}
+                      </span>
+                      <span className="text-xs text-pastel-mint">
+                        {totalStock} disponibles
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link href="/productos" className="btn-primary">
+              Ver Todos los Productos
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Categorías Preview */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-4xl font-serif font-bold text-center mb-12">
-          <span className="text-gradient">Nuestras Categorías</span>
+          <span className="text-gradient">Nuestras Categorias</span>
         </h2>
 
         <div className="grid md:grid-cols-4 gap-6">
-          {["Tacones", "Sandalias", "Botas", "Casuales"].map((category) => (
+          {categories.map((category) => (
             <Link
-              key={category}
-              href={`/categorias/${category.toLowerCase()}`}
-              className="card-product aspect-square flex items-center justify-center"
+              key={category.id}
+              href={`/categorias/${category.slug}`}
+              className="card group aspect-square flex items-center justify-center hover:scale-105 transition-transform"
             >
               <h3 className="text-2xl font-serif font-bold text-pastel-rose group-hover:scale-110 transition-transform">
-                {category}
+                {category.name}
               </h3>
             </Link>
           ))}
