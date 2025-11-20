@@ -35,3 +35,15 @@ next-env.d.ts
 
 # prisma
 prisma/migrations
+
+# Windows reserved names
+nul
+con
+prn
+aux
+com[0-9]
+lpt[0-9]
+
+# Scripts and temp files
+fix-onedrive.ps1
+scripts/
